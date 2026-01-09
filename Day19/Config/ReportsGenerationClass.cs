@@ -71,10 +71,11 @@ namespace Day19.Config
             {
                 test!.Pass("Test Passed");
             }
-            else
+            else if (status == TestStatus.Skipped)
             {
-                test!.Skip("Test Skipped");
+                test!.Skip(TestContext.CurrentContext.Result.Message);
             }
+
 
             driver?.Quit();
             driver?.Dispose();
