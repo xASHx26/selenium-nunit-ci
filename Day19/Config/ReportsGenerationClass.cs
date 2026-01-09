@@ -3,22 +3,20 @@ using AventStack.ExtentReports.Reporter;
 using NUnit.Framework;
 using NUnit.Framework.Interfaces;
 using OpenQA.Selenium;
-using OpenQA.Selenium.Chrome;
 using OpenQA.Selenium.Edge;
 using System;
 using System.IO;
 using Day19.Utils;
 
-
 namespace Day19.Config
 {
     public abstract class ReportsGenerationClass
     {
-        protected static ExtentReports extent;
-        protected ExtentTest test;
-        protected IWebDriver driver;
+        protected static ExtentReports? extent;
+        protected ExtentTest? test;
+        protected IWebDriver? driver;
 
-        private static string reportDir =
+        private static readonly string reportDir =
             Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Reports");
 
         // ================= ONE TIME =================
@@ -37,18 +35,24 @@ namespace Day19.Config
             extent = new ExtentReports();
             extent.AttachReporter(reporter);
 
-            extent.AddSystemInfo("Browser", "Chrome");
+            extent.AddSystemInfo("Browser", "Edge (Headless)");
             extent.AddSystemInfo("Framework", "NUnit + Selenium");
+            extent.AddSystemInfo("CI", "GitHub Actions");
         }
 
         // ================= BEFORE EACH TEST =================
         [SetUp]
         public void Setup()
         {
-            driver = new EdgeDriver();
+            var options = new EdgeOptions();
+            options.AddArgument("--headless=new");
+            options.AddArgument("--disable-gpu");
+            options.AddArgument("--window-size=1920,1080");
+
+            driver = new EdgeDriver(options);
             driver.Manage().Window.Maximize();
 
-            test = extent.CreateTest(TestContext.CurrentContext.Test.Name);
+            test = extent!.CreateTest(TestContext.CurrentContext.Test.Name);
         }
 
         // ================= AFTER EACH TEST =================
@@ -59,52 +63,34 @@ namespace Day19.Config
 
             if (status == TestStatus.Failed)
             {
-                string screenshotPath = ScreenshotHelper.Capture(driver);
-
-                test.Fail(TestContext.CurrentContext.Result.Message)
-                    .AddScreenCaptureFromPath(screenshotPath);
+                string screenshotPath = ScreenshotHelper.Capture(driver!);
+                test!.Fail(TestContext.CurrentContext.Result.Message)
+                     .AddScreenCaptureFromPath(screenshotPath);
             }
             else if (status == TestStatus.Passed)
             {
-                test.Pass("Test Passed");
+                test!.Pass("Test Passed");
             }
             else
             {
-                test.Skip("Test Skipped");
+                test!.Skip("Test Skipped");
             }
 
-            driver.Quit();
-            driver.Dispose();
+            driver?.Quit();
+            driver?.Dispose();
         }
 
         // ================= ONE TIME CLEANUP =================
         [OneTimeTearDown]
         public void OneTimeTearDown()
         {
-            extent.Flush();
-        }
-
-        // ================= SCREENSHOT METHOD =================
-        private string CaptureScreenshot()
-        {
-            string screenshotDir = Path.Combine(reportDir, "Screenshots");
-            Directory.CreateDirectory(screenshotDir);
-
-            string filePath = Path.Combine(
-                screenshotDir,
-                $"{TestContext.CurrentContext.Test.Name}_{DateTime.Now:yyyyMMdd_HHmmss}.png"
-            );
-
-            ITakesScreenshot ts = (ITakesScreenshot)driver;
-            ts.GetScreenshot().SaveAsFile(filePath);
-
-            return filePath;
+            extent?.Flush();
         }
 
         // ================= DRIVER ACCESS =================
         protected IWebDriver GetDriver()
         {
-            return driver;
+            return driver!;
         }
     }
 }
