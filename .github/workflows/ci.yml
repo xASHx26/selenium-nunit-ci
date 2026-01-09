@@ -7,7 +7,7 @@ on:
     branches: [ "main" ]
 
 jobs:
-  build-and-test:
+  build-test-report:
     runs-on: windows-latest
 
     steps:
@@ -17,20 +17,28 @@ jobs:
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
       with:
-        dotnet-version: '8.0.x'
+        dotnet-version: '10.0.x'
 
     - name: Restore dependencies
       run: dotnet restore
 
-    - name: Build
+    - name: Build solution
       run: dotnet build --configuration Release
 
     - name: Run tests
-      run: dotnet test --configuration Release --no-build
+      run: dotnet test --configuration Release
+      continue-on-error: true   # IMPORTANT → still generate report
 
-    - name: Upload Extent Report
+    - name: Upload Extent Report artifact
       uses: actions/upload-artifact@v4
       with:
         name: extent-report
-        path: |
-          **/bin/Release/**/Reports
+        path: Day19/bin/Release/net10.0/Reports
+
+    - name: Deploy Extent Report to GitHub Pages
+      if: always()
+      uses: peaceiris/actions-gh-pages@v4
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_branch: gh-pages
+        publish_dir: Day19/bin/Release/net10.0/Reports
