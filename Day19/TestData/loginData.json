@@ -1,4 +1,4 @@
-﻿[
+[
   {
     "Username": "standard_user",
     "Password": "secret_sauce",
@@ -10,9 +10,7 @@
       "add-to-cart-sauce-labs-onesie",
       "add-to-cart-test.allthethings()-t-shirt-(red)"
     ]
-
   },
-
   {
     "Username": "wrong_user",
     "Password": "wrong_pass",
@@ -23,5 +21,4 @@
     "Password": "secret_sauce",
     "Items": []
   }
-
 ]
