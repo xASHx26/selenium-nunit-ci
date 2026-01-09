@@ -12,9 +12,9 @@ namespace Day19.Config
 {
     public abstract class ReportsGenerationClass
     {
-        protected static ExtentReports extent!;
-        protected ExtentTest test!;
-        protected IWebDriver driver!;
+        protected static ExtentReports? extent;
+        protected ExtentTest? test;
+        protected IWebDriver? driver;
 
         private static readonly string reportDir =
             Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Reports");
@@ -52,8 +52,8 @@ namespace Day19.Config
             driver = new EdgeDriver(options);
             driver.Manage().Window.Maximize();
 
-            test = extent.CreateTest(
-                $"{TestContext.CurrentContext.Test.Name} | Data: {TestContext.CurrentContext.Test.Arguments[0]}"
+            test = extent!.CreateTest(
+                TestContext.CurrentContext.Test.Name
             );
         }
 
@@ -63,40 +63,36 @@ namespace Day19.Config
         {
             var status = TestContext.CurrentContext.Result.Outcome.Status;
 
-            if (status == TestStatus.Failed)
+            if (status == TestStatus.Failed && driver != null)
             {
                 string screenshotPath = ScreenshotHelper.Capture(driver);
 
-                if (!string.IsNullOrEmpty(screenshotPath))
-                {
-                    test.Fail(TestContext.CurrentContext.Result.Message)
-                        .AddScreenCaptureFromPath(screenshotPath);
-                }
-                else
-                {
-                    test.Fail(TestContext.CurrentContext.Result.Message);
-                }
+                test?.Fail(TestContext.CurrentContext.Result.Message)
+                     .AddScreenCaptureFromPath(screenshotPath);
             }
             else if (status == TestStatus.Passed)
             {
-                test.Pass("Test Passed");
+                test?.Pass("Test Passed");
             }
             else if (status == TestStatus.Skipped)
             {
-                test.Skip(TestContext.CurrentContext.Result.Message);
+                test?.Skip(TestContext.CurrentContext.Result.Message);
             }
 
-            driver.Quit();
-            driver.Dispose();
+            driver?.Quit();
+            driver?.Dispose();
         }
 
         // ================= ONE TIME CLEANUP =================
         [OneTimeTearDown]
         public void OneTimeTearDown()
         {
-            extent.Flush();
+            extent?.Flush();
         }
 
-        protected IWebDriver GetDriver() => driver;
+        protected IWebDriver GetDriver()
+        {
+            return driver!;
+        }
     }
 }
